@@ -1,9 +1,9 @@
 Config = {}
 
 -- Densidades
-Config.DensityMultiplier = 0.25
-Config.DensityParkedMultiplier = 0.10
-Config.SuperCarDensity = 0.30 -- Ajusta esta densidad para los coches superdeportivos
+Config.DensityMultiplier = 0.25 -- Densidad de vehiculos normales en movimiento
+Config.DensityParkedMultiplier = 0.10 -- Densidad de vehiculos aparcados
+Config.SuperCarDensity = 0.30 -- densidad para los coches superdeportivos
 
 -- Modelos de superdeportivos
 Config.SuperCars = {
