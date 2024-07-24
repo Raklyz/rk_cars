@@ -9,13 +9,13 @@ Citizen.CreateThread(function()
         SetPedDensityMultiplierThisFrame(Config.DensityMultiplier)
         SetScenarioPedDensityMultiplierThisFrame(Config.DensityParkedMultiplier, Config.DensityParkedMultiplier)
 
-        SetGarbageTrucks(false) -- Stop garbage trucks from randomly spawning
-        SetRandomBoats(false) -- Stop random boats from spawning in the water.
-        SetCreateRandomCops(false) -- disable random cops walking/driving around.
-        SetCreateRandomCopsNotOnScenarios(false) -- stop random cops (not in a scenario) from spawning.
-        SetCreateRandomCopsOnScenarios(false) -- stop random cops (in a scenario) from spawning.
+        SetGarbageTrucks(false) -- Evita que los camiones de basura aparezcan aleatoriamente
+        SetRandomBoats(false) -- Evita que barcos spawneen aleatoriamente
+        SetCreateRandomCops(false) -- desactivar policías aleatorios que caminan o conducen.
+        SetCreateRandomCopsNotOnScenarios(false) -- desactiva los sonidos de los coches policias y ambulacias aleatorios
+        SetCreateRandomCopsOnScenarios(false) -- desactiva los sonidos de los coches policias y ambulacias aleatorios
 
-        -- Asegúrate de que los modelos de vehículos y peds estén cargados
+        -- Asegura de que los modelos de vehículos y peds estan cargados
         for _, model in ipairs(Config.SuperCars) do
             RequestModel(GetHashKey(model))
         end
@@ -33,14 +33,13 @@ Citizen.CreateThread(function()
 
                 -- Crear el vehículo superdeportivo
                 local newVeh = CreateVehicle(GetHashKey(newModel), pos.x, pos.y, pos.z, heading, true, false)
-                -- Crear un ped y ponerlo dentro del vehículo
+                -- Crear un ped y lo mete dentro del vehículo
                 local ped = CreatePedInsideVehicle(newVeh, 4, GetHashKey(Config.NpcModel), -1, true, false)
 
-                -- Hacer que el vehículo y el ped sean entidades de misión para evitar que sean reemplazados de nuevo
                 SetEntityAsMissionEntity(newVeh, true, true)
                 SetEntityAsMissionEntity(ped, true, true)
 
-                -- Eliminar el vehículo original
+                -- Elimina el vehículo original
                 replacedVehicles[veh] = true
                 DeleteVehicle(veh)
 
@@ -53,7 +52,6 @@ Citizen.CreateThread(function()
     end
 end)
 
--- Helper function to enumerate vehicles
 function EnumerateVehicles()
     return coroutine.wrap(function()
         local handle, veh = FindFirstVehicle()
