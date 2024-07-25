@@ -3,7 +3,7 @@ game 'gta5'
 
 author 'Raklyz'
 description 'Modificación de densidad de tráfico con superdeportivos'
-version '1.0.1'
+version '1.0.2'
 
 client_scripts {
     'config.lua',
