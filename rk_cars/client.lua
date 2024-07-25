@@ -1,5 +1,33 @@
 local replacedVehicles = {} -- Tabla para almacenar vehículos ya reemplazados
 
+-- Función para comprobar si un punto está dentro de un área
+local function IsPointInZone(point, zone)
+    local dist = Vdist(point.x, point.y, point.z, zone.x, zone.y, zone.z)
+    return dist <= zone.radius
+end
+
+-- Función para comprobar si un vehículo está en una zona permitida
+local function IsInSpawnZone(veh)
+    local pos = GetEntityCoords(veh)
+    for _, zone in ipairs(Config.SpawnZones) do
+        if IsPointInZone(pos, zone) then
+            return true
+        end
+    end
+    return false
+end
+
+-- Función para comprobar si un vehículo está en una zona de blacklist
+local function IsInBlacklistZone(veh)
+    local pos = GetEntityCoords(veh)
+    for _, zone in ipairs(Config.BlacklistZones) do
+        if IsPointInZone(pos, zone) then
+            return true
+        end
+    end
+    return false
+end
+
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(0)
@@ -9,13 +37,13 @@ Citizen.CreateThread(function()
         SetPedDensityMultiplierThisFrame(Config.DensityMultiplier)
         SetScenarioPedDensityMultiplierThisFrame(Config.DensityParkedMultiplier, Config.DensityParkedMultiplier)
 
-        SetGarbageTrucks(false) -- Evita que los camiones de basura aparezcan aleatoriamente
-        SetRandomBoats(false) -- Evita que barcos spawneen aleatoriamente
-        SetCreateRandomCops(false) -- desactivar policías aleatorios que caminan o conducen.
-        SetCreateRandomCopsNotOnScenarios(false) -- desactiva los sonidos de los coches policias y ambulacias aleatorios
-        SetCreateRandomCopsOnScenarios(false) -- desactiva los sonidos de los coches policias y ambulacias aleatorios
+        SetGarbageTrucks(false) -- Stop garbage trucks from randomly spawning
+        SetRandomBoats(false) -- Stop random boats from spawning in the water.
+        SetCreateRandomCops(false) -- disable random cops walking/driving around.
+        SetCreateRandomCopsNotOnScenarios(false) -- stop random cops (not in a scenario) from spawning.
+        SetCreateRandomCopsOnScenarios(false) -- stop random cops (in a scenario) from spawning.
 
-        -- Asegura de que los modelos de vehículos y peds estan cargados
+        -- Asegúrate de que los modelos de vehículos y peds estén cargados
         for _, model in ipairs(Config.SuperCars) do
             RequestModel(GetHashKey(model))
         end
@@ -27,24 +55,29 @@ Citizen.CreateThread(function()
         -- Reemplazar vehículos aleatorios con superdeportivos basados en SuperCarDensity
         for veh in EnumerateVehicles() do
             if not replacedVehicles[veh] and math.random() < Config.SuperCarDensity then
-                local pos = GetEntityCoords(veh)
-                local heading = GetEntityHeading(veh)
-                local newModel = Config.SuperCars[math.random(#Config.SuperCars)]
+                if IsInSpawnZone(veh) and not IsInBlacklistZone(veh) then
+                    local pos = GetEntityCoords(veh)
+                    local heading = GetEntityHeading(veh)
+                    local newModel = Config.SuperCars[math.random(#Config.SuperCars)]
 
-                -- Crear el vehículo superdeportivo
-                local newVeh = CreateVehicle(GetHashKey(newModel), pos.x, pos.y, pos.z, heading, true, false)
-                -- Crear un ped y lo mete dentro del vehículo
-                local ped = CreatePedInsideVehicle(newVeh, 4, GetHashKey(Config.NpcModel), -1, true, false)
+                    -- Crear el vehículo superdeportivo
+                    local newVeh = CreateVehicle(GetHashKey(newModel), pos.x, pos.y, pos.z, heading, true, false)
+                    -- Crear un ped y ponerlo dentro del vehículo
+                    local ped = CreatePedInsideVehicle(newVeh, 4, GetHashKey(Config.NpcModel), -1, true, false)
 
-                SetEntityAsMissionEntity(newVeh, true, true)
-                SetEntityAsMissionEntity(ped, true, true)
+                    -- Hacer que el vehículo y el ped sean entidades de misión para evitar que sean reemplazados de nuevo
+                    SetEntityAsMissionEntity(newVeh, true, true)
+                    SetEntityAsMissionEntity(ped, true, true)
 
-                -- Elimina el vehículo original
-                replacedVehicles[veh] = true
-                DeleteVehicle(veh)
+                    -- Eliminar el vehículo original
+                    replacedVehicles[veh] = true
+                    DeleteVehicle(veh)
 
-                SetEntityAsNoLongerNeeded(newVeh)
-                SetPedAsNoLongerNeeded(ped)
+                    SetEntityAsNoLongerNeeded(newVeh)
+                    SetPedAsNoLongerNeeded(ped)
+                else
+                    replacedVehicles[veh] = true -- Marca el vehículo como revisado
+                end
             else
                 replacedVehicles[veh] = true -- Marca el vehículo como revisado
             end
@@ -52,6 +85,7 @@ Citizen.CreateThread(function()
     end
 end)
 
+-- Helper function to enumerate vehicles
 function EnumerateVehicles()
     return coroutine.wrap(function()
         local handle, veh = FindFirstVehicle()
